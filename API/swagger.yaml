@@ -1,0 +1,2486 @@
+swagger: '2.0'
+info:
+  version: 1.0.0
+  title: Золотая Ложка API
+  description: API для системы управления рестораном Золотая Ложка
+host: api.rpm.timka20.ru
+basePath: /
+schemes:
+- https
+securityDefinitions:
+  Bearer:
+    type: apiKey
+    name: Authorization
+    in: header
+    description: 'JWT Authorization header using the Bearer scheme. Example: ''Bearer {token}'''
+tags:
+- name: Пользователи
+  description: Операции с пользователями и аутентификацией
+- name: Роли
+  description: Управление ролями пользователей
+- name: Столы
+  description: Управление столами ресторана
+- name: Бронирования
+  description: Управление бронированиями столов
+- name: Заказы
+  description: Управление заказами клиентов
+- name: Меню
+  description: Просмотр и управление меню ресторана
+- name: Транзакции
+  description: Управление финансовыми транзакциями
+- name: Админ Панель
+  description: Операции для админ панели, работает только с авторизацией админа
+- name: Рецепты
+  description: Управление рецептами блюд
+- name: Кухня
+  description: Управление кухонным оборудованием и инвентарём
+- name: Уборка
+  description: Управление задачами уборки и зонами
+- name: Поставщики
+  description: Управление поставщиками и заказами
+paths:
+  /:
+    get:
+      tags:
+      - Пользователи
+      summary: Редирект на 403
+      responses:
+        '302':
+          description: Редирект
+  /register:
+    post:
+      tags:
+      - Пользователи
+      summary: Регистрация нового пользователя
+      parameters:
+      - in: body
+        name: user
+        required: true
+        schema:
+          type: object
+          properties:
+            username:
+              type: string
+            password:
+              type: string
+            roleId:
+              type: integer
+          required:
+          - username
+          - password
+      responses:
+        '201':
+          description: Пользователь успешно зарегистрирован
+          schema:
+            type: object
+            properties:
+              userId:
+                type: integer
+        '400':
+          description: Некорректные данные
+        '500':
+          description: Внутренняя ошибка сервера
+  /login:
+    post:
+      tags:
+      - Пользователи
+      summary: Авторизация пользователя
+      parameters:
+      - in: body
+        name: credentials
+        required: true
+        schema:
+          type: object
+          properties:
+            username:
+              type: string
+            password:
+              type: string
+          required:
+          - username
+          - password
+      responses:
+        '200':
+          description: Успешная авторизация
+          schema:
+            type: object
+            properties:
+              token:
+                type: string
+        '401':
+          description: Неверные учетные данные
+        '500':
+          description: Внутренняя ошибка сервера
+  /user/{id}:
+    get:
+      tags:
+      - Пользователи
+      summary: Получение информации о пользователе по ID
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: Информация о пользователе
+          schema:
+            type: object
+            properties:
+              UserID:
+                type: integer
+              Username:
+                type: string
+              RoleId:
+                type: integer
+              CreatedDate:
+                type: string
+                format: date-time
+        '404':
+          description: Пользователь не найден
+        '500':
+          description: Внутренняя ошибка сервера
+  /roles:
+    get:
+      tags:
+      - Роли
+      summary: Получение списка ролей
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: Список ролей
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                RoleID:
+                  type: integer
+                Name:
+                  type: string
+        '500':
+          description: Внутренняя ошибка сервера
+  /tables:
+    get:
+      tags:
+      - Столы
+      summary: Получение списка всех столов
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: Список столов
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                TableID:
+                  type: integer
+                TableNumber:
+                  type: string
+                Capacity:
+                  type: integer
+                IsReserved:
+                  type: boolean
+        '500':
+          description: Внутренняя ошибка сервера
+    post:
+      tags:
+      - Столы
+      summary: Добавление нового стола
+      security:
+      - Bearer: []
+      parameters:
+      - in: body
+        name: table
+        required: true
+        schema:
+          type: object
+          properties:
+            tableNumber:
+              type: string
+            capacity:
+              type: integer
+          required:
+          - tableNumber
+          - capacity
+      responses:
+        '201':
+          description: Стол успешно добавлен
+          schema:
+            type: object
+            properties:
+              tableId:
+                type: integer
+        '400':
+          description: Некорректные данные
+        '500':
+          description: Внутренняя ошибка сервера
+  /tables/{id}:
+    get:
+      tags:
+      - Столы
+      summary: Получение информации о столе по ID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: Информация о столе
+          schema:
+            type: object
+            properties:
+              TableID:
+                type: integer
+              TableNumber:
+                type: string
+              Capacity:
+                type: integer
+              IsReserved:
+                type: boolean
+        '404':
+          description: Стол не найден
+        '500':
+          description: Внутренняя ошибка сервера
+  /reservations:
+    get:
+      tags:
+      - Бронирования
+      summary: Получение списка всех бронирований
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: Список бронирований
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                ReservationID:
+                  type: integer
+                TableID:
+                  type: integer
+                UserID:
+                  type: integer
+                UserUsername:
+                  type: string
+                TableNumber:
+                  type: string
+                ReservationDateTime:
+                  type: string
+                  format: date-time
+                NumberOfPeople:
+                  type: integer
+        '500':
+          description: Внутренняя ошибка сервера
+    post:
+      tags:
+      - Бронирования
+      summary: Создание нового бронирования
+      security:
+      - Bearer: []
+      parameters:
+      - in: body
+        name: reservation
+        required: true
+        schema:
+          type: object
+          properties:
+            tableId:
+              type: integer
+            reservationDateTime:
+              type: string
+              format: date-time
+            numberOfPeople:
+              type: integer
+          required:
+          - tableId
+          - reservationDateTime
+          - numberOfPeople
+      responses:
+        '201':
+          description: Бронирование успешно создано
+          schema:
+            type: object
+            properties:
+              reservationId:
+                type: integer
+        '400':
+          description: Некорректные данные
+        '500':
+          description: Внутренняя ошибка сервера
+  /reservations/{id}:
+    get:
+      tags:
+      - Бронирования
+      summary: Получение бронирования по ID
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: Информация о бронировании
+          schema:
+            type: object
+            properties:
+              ReservationID:
+                type: integer
+              TableID:
+                type: integer
+              UserID:
+                type: integer
+              UserUsername:
+                type: string
+              TableNumber:
+                type: string
+              ReservationDateTime:
+                type: string
+                format: date-time
+              NumberOfPeople:
+                type: integer
+        '404':
+          description: Бронирование не найдено
+        '500':
+          description: Внутренняя ошибка сервера
+    delete:
+      tags:
+      - Бронирования
+      summary: Удаление бронирования по ID
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '204':
+          description: Бронирование успешно удалено
+        '404':
+          description: Бронирование не найдено
+        '500':
+          description: Внутренняя ошибка сервера
+  /orders:
+    get:
+      tags:
+      - Заказы
+      summary: Получение списка всех заказов
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: Список заказов
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                OrderID:
+                  type: integer
+                UserID:
+                  type: integer
+                UserUsername:
+                  type: string
+                TableID:
+                  type: integer
+                TableNumber:
+                  type: string
+                OrderDateTime:
+                  type: string
+                  format: date-time
+                Status:
+                  type: string
+        '500':
+          description: Внутренняя ошибка сервера
+    post:
+      tags:
+      - Заказы
+      summary: Создание нового заказа
+      security:
+      - Bearer: []
+      parameters:
+      - in: body
+        name: order
+        required: true
+        schema:
+          type: object
+          properties:
+            tableId:
+              type: integer
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  menuItemId:
+                    type: integer
+                  quantity:
+                    type: integer
+                required:
+                - menuItemId
+                - quantity
+          required:
+          - tableId
+          - items
+      responses:
+        '201':
+          description: Заказ успешно создан
+          schema:
+            type: object
+            properties:
+              orderId:
+                type: integer
+        '400':
+          description: Некорректные данные
+        '500':
+          description: Внутренняя ошибка сервера
+  /orders/{id}:
+    get:
+      tags:
+      - Заказы
+      summary: Получение заказа по ID с позициями
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: Информация о заказе
+          schema:
+            type: object
+            properties:
+              OrderID:
+                type: integer
+              UserID:
+                type: integer
+              UserUsername:
+                type: string
+              TableID:
+                type: integer
+              TableNumber:
+                type: string
+              OrderDateTime:
+                type: string
+                format: date-time
+              Status:
+                type: string
+              items:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    MenuItemID:
+                      type: integer
+                    MenuItemName:
+                      type: string
+                    Quantity:
+                      type: integer
+                    Price:
+                      type: number
+                      format: float
+        '404':
+          description: Заказ не найден
+        '500':
+          description: Внутренняя ошибка сервера
+    put:
+      tags:
+      - Заказы
+      summary: Обновление состава заказа (полная замена позиций)
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: orderUpdate
+        required: true
+        schema:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  menuItemId:
+                    type: integer
+                  quantity:
+                    type: integer
+                required:
+                - menuItemId
+                - quantity
+          required:
+          - items
+      responses:
+        '200':
+          description: Заказ успешно обновлён
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        '400':
+          description: Некорректные данные
+        '404':
+          description: Заказ не найден
+        '500':
+          description: Внутренняя ошибка сервера
+  /orders/{id}/items:
+    post:
+      tags:
+      - Заказы
+      summary: Добавление дополнительных позиций к заказу
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: itemsBody
+        required: true
+        schema:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  menuItemId:
+                    type: integer
+                  quantity:
+                    type: integer
+                required:
+                - menuItemId
+                - quantity
+          required:
+          - items
+      responses:
+        '200':
+          description: Дополнительные позиции добавлены
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        '400':
+          description: Некорректные данные
+        '404':
+          description: Заказ не найден
+        '500':
+          description: Внутренняя ошибка сервера
+  /orders/status/{id}:
+    put:
+      tags:
+      - Заказы
+      summary: Обновление статуса заказа
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: statusUpdate
+        required: true
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+          required:
+          - status
+      responses:
+        '200':
+          description: Статус заказа обновлён
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        '400':
+          description: Статус не указан
+        '404':
+          description: Заказ не найден
+        '500':
+          description: Внутренняя ошибка сервера
+  /menu:
+    get:
+      tags:
+      - Меню
+      summary: Получение активного меню
+      responses:
+        '200':
+          description: Меню ресторана
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                MenuItemID:
+                  type: integer
+                Name:
+                  type: string
+                Description:
+                  type: string
+                Price:
+                  type: number
+                  format: float
+                IsActive:
+                  type: boolean
+                Image:
+                  type: string
+                  description: Ссылка на фото блюда
+        '500':
+          description: Внутренняя ошибка сервера
+    post:
+      tags:
+      - Меню
+      summary: Создание нового элемента меню
+      security:
+      - Bearer: []
+      parameters:
+      - in: body
+        name: menuItem
+        required: true
+        schema:
+          type: object
+          properties:
+            name:
+              type: string
+            description:
+              type: string
+            price:
+              type: number
+              format: float
+            isActive:
+              type: boolean
+            image:
+              type: string
+              description: Ссылка на фото блюда
+          required:
+          - name
+          - price
+      responses:
+        '201':
+          description: Элемент меню успешно создан
+          schema:
+            type: object
+            properties:
+              menuItemId:
+                type: integer
+        '400':
+          description: Некорректные данные
+        '500':
+          description: Внутренняя ошибка сервера
+  /menu/{id}:
+    get:
+      tags:
+      - Меню
+      summary: Получение элемента меню по ID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: Элемент меню
+          schema:
+            type: object
+            properties:
+              MenuItemID:
+                type: integer
+              Name:
+                type: string
+              Description:
+                type: string
+              Price:
+                type: number
+                format: float
+              IsActive:
+                type: boolean
+              Image:
+                type: string
+                description: Ссылка на фото блюда
+        '404':
+          description: Элемент меню не найден
+        '500':
+          description: Внутренняя ошибка сервера
+    put:
+      tags:
+      - Меню
+      summary: Обновление элемента меню
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: menuItemUpdate
+        required: true
+        schema:
+          type: object
+          properties:
+            name:
+              type: string
+            description:
+              type: string
+            price:
+              type: number
+              format: float
+            isActive:
+              type: boolean
+            image:
+              type: string
+              description: Ссылка на фото блюда
+      responses:
+        '200':
+          description: Элемент меню обновлён
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        '404':
+          description: Элемент меню не найден
+        '500':
+          description: Внутренняя ошибка сервера
+    delete:
+      tags:
+      - Меню
+      summary: Снятие блюда с продажи (деактивация)
+      description: Вместо физического удаления блюдо помечается как неактивное (IsActive = false), чтобы сохранить историю заказов.
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: Блюдо снято с продажи
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        '404':
+          description: Элемент меню не найден
+        '500':
+          description: Внутренняя ошибка сервера
+  /transactions:
+    get:
+      tags:
+      - Транзакции
+      summary: Получение списка всех транзакций
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: Список транзакций
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                TransactionID:
+                  type: integer
+                OrderID:
+                  type: integer
+                Amount:
+                  type: number
+                  format: float
+                TransactionDateTime:
+                  type: string
+                  format: date-time
+                UserID:
+                  type: integer
+                UserUsername:
+                  type: string
+        '500':
+          description: Внутренняя ошибка сервера
+    post:
+      tags:
+      - Транзакции
+      summary: Создание новой транзакции
+      security:
+      - Bearer: []
+      parameters:
+      - in: body
+        name: transaction
+        required: true
+        schema:
+          type: object
+          properties:
+            orderId:
+              type: integer
+            amount:
+              type: number
+              format: float
+          required:
+          - orderId
+          - amount
+      responses:
+        '201':
+          description: Транзакция успешно создана
+          schema:
+            type: object
+            properties:
+              transactionId:
+                type: integer
+        '400':
+          description: Некорректные данные
+        '500':
+          description: Внутренняя ошибка сервера
+  /transactions/{id}:
+    get:
+      tags:
+      - Транзакции
+      summary: Получение транзакции по ID
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: Информация о транзакции
+          schema:
+            type: object
+            properties:
+              TransactionID:
+                type: integer
+              OrderID:
+                type: integer
+              Amount:
+                type: number
+                format: float
+              TransactionDateTime:
+                type: string
+                format: date-time
+              UserID:
+                type: integer
+              UserUsername:
+                type: string
+        '404':
+          description: Транзакция не найдена
+        '500':
+          description: Внутренняя ошибка сервера
+  /admin/users:
+    get:
+      tags:
+      - Админ Панель
+      summary: Получение списка всех пользователей
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: Список пользователей
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                UserID:
+                  type: integer
+                Username:
+                  type: string
+                RoleId:
+                  type: integer
+                CreatedDate:
+                  type: string
+                  format: date-time
+        '403':
+          description: Доступ запрещён
+        '500':
+          description: Внутренняя ошибка сервера
+  /admin/users/{id}:
+    delete:
+      tags:
+      - Админ Панель
+      summary: Удаление пользователя по ID
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '204':
+          description: Пользователь успешно удалён
+        '400':
+          description: Нельзя удалить собственный аккаунт
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Пользователь не найден
+        '500':
+          description: Внутренняя ошибка сервера
+  /admin/users/{id}/role:
+    put:
+      tags:
+      - Админ Панель
+      summary: Изменение роли пользователя
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: roleUpdate
+        required: true
+        schema:
+          type: object
+          properties:
+            roleId:
+              type: integer
+          required:
+          - roleId
+      responses:
+        '200':
+          description: Роль пользователя обновлена
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        '400':
+          description: Некорректный roleId
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Пользователь не найден
+        '500':
+          description: Внутренняя ошибка сервера
+  /admin/tables:
+    get:
+      tags:
+      - Админ Панель
+      summary: Получение всех столов (админский доступ)
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: Список столов
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                TableID:
+                  type: integer
+                TableNumber:
+                  type: string
+                Capacity:
+                  type: integer
+                IsReserved:
+                  type: boolean
+        '403':
+          description: Доступ запрещён
+        '500':
+          description: Внутренняя ошибка сервера
+  /admin/tables/{id}:
+    put:
+      tags:
+      - Админ Панель
+      summary: Обновление данных стола
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: tableUpdate
+        required: true
+        schema:
+          type: object
+          properties:
+            tableNumber:
+              type: string
+            capacity:
+              type: integer
+      responses:
+        '200':
+          description: Стол успешно обновлён
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        '400':
+          description: Нет полей для обновления
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Стол не найден
+        '500':
+          description: Внутренняя ошибка сервера
+    delete:
+      tags:
+      - Админ Панель
+      summary: Удаление стола
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '204':
+          description: Стол успешно удалён
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Стол не найден
+        '500':
+          description: Внутренняя ошибка сервера
+  /admin/reservations:
+    get:
+      tags:
+      - Админ Панель
+      summary: Получение всех бронирований
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: Список бронирований
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                ReservationID:
+                  type: integer
+                TableID:
+                  type: integer
+                UserID:
+                  type: integer
+                UserUsername:
+                  type: string
+                TableNumber:
+                  type: string
+                ReservationDateTime:
+                  type: string
+                  format: date-time
+                NumberOfPeople:
+                  type: integer
+        '403':
+          description: Доступ запрещён
+        '500':
+          description: Внутренняя ошибка сервера
+  /admin/reservations/{id}:
+    delete:
+      tags:
+      - Админ Панель
+      summary: Принудительное удаление бронирования
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '204':
+          description: Бронирование удалено
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Бронирование не найдено
+        '500':
+          description: Внутренняя ошибка сервера
+  /admin/orders:
+    get:
+      tags:
+      - Админ Панель
+      summary: Получение всех заказов
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: Список заказов
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                OrderID:
+                  type: integer
+                UserID:
+                  type: integer
+                UserUsername:
+                  type: string
+                TableID:
+                  type: integer
+                TableNumber:
+                  type: string
+                OrderDateTime:
+                  type: string
+                  format: date-time
+                Status:
+                  type: string
+        '403':
+          description: Доступ запрещён
+        '500':
+          description: Внутренняя ошибка сервера
+  /admin/orders/{id}:
+    delete:
+      tags:
+      - Админ Панель
+      summary: Принудительное удаление заказа
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '204':
+          description: Заказ удалён
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Заказ не найден
+        '500':
+          description: Внутренняя ошибка сервера
+    post:
+      tags:
+      - Транзакции
+      summary: Создание транзакции (оплата заказа)
+      description: Используется официантом для фиксации оплаты заказа клиентом.
+      security:
+      - Bearer: []
+      parameters:
+      - in: body
+        name: transaction
+        required: true
+        schema:
+          type: object
+          properties:
+            orderId:
+              type: integer
+              description: ID заказа
+            amount:
+              type: number
+              format: float
+              description: Сумма оплаты
+          required:
+          - orderId
+          - amount
+      responses:
+        '201':
+          description: Транзакция создана
+          schema:
+            type: object
+            properties:
+              transactionId:
+                type: integer
+        '400':
+          description: Некорректные данные
+        '500':
+          description: Внутренняя ошибка сервера
+  /admin/transactions:
+    get:
+      tags:
+      - Админ Панель
+      summary: Получение всех транзакций
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: Список транзакций
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                TransactionID:
+                  type: integer
+                OrderID:
+                  type: integer
+                Amount:
+                  type: number
+                  format: float
+                TransactionDateTime:
+                  type: string
+                  format: date-time
+                UserID:
+                  type: integer
+                UserUsername:
+                  type: string
+        '403':
+          description: Доступ запрещён
+        '500':
+          description: Внутренняя ошибка сервера
+  /reviews:
+    get:
+      tags:
+      - Отзывы
+      summary: Получение всех отзывов
+      responses:
+        '200':
+          description: Список отзывов
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                ReviewID:
+                  type: integer
+                OrderID:
+                  type: integer
+                Rating:
+                  type: integer
+                Comment:
+                  type: string
+                CreatedAt:
+                  type: string
+                  format: date-time
+                UserID:
+                  type: integer
+                UserUsername:
+                  type: string
+        '500':
+          description: Внутренняя ошибка сервера
+    post:
+      tags:
+      - Отзывы
+      summary: Создание отзыва к заказу
+      security:
+      - Bearer: []
+      parameters:
+      - in: body
+        name: review
+        required: true
+        schema:
+          type: object
+          properties:
+            orderId:
+              type: integer
+            rating:
+              type: integer
+              minimum: 1
+              maximum: 5
+            comment:
+              type: string
+          required:
+          - orderId
+          - rating
+      responses:
+        '201':
+          description: Отзыв создан
+          schema:
+            type: object
+            properties:
+              reviewId:
+                type: integer
+        '400':
+          description: Некорректные данные
+        '409':
+          description: Отзыв к этому заказу уже существует
+        '500':
+          description: Внутренняя ошибка сервера
+  /reviews/{orderId}:
+    get:
+      tags:
+      - Отзывы
+      summary: Получение отзыва по номеру заказа
+      parameters:
+      - in: path
+        name: orderId
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: Отзыв
+          schema:
+            type: object
+            properties:
+              ReviewID:
+                type: integer
+              OrderID:
+                type: integer
+              Rating:
+                type: integer
+              Comment:
+                type: string
+              CreatedAt:
+                type: string
+                format: date-time
+              UserID:
+                type: integer
+              UserUsername:
+                type: string
+        '404':
+          description: Отзыв не найден
+        '500':
+          description: Внутренняя ошибка сервера
+  /admin/reviews:
+    get:
+      tags:
+      - Админ Панель
+      summary: Получение всех отзывов (админ)
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: Список отзывов
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                ReviewID:
+                  type: integer
+                OrderID:
+                  type: integer
+                Rating:
+                  type: integer
+                Comment:
+                  type: string
+                CreatedAt:
+                  type: string
+                  format: date-time
+                UserID:
+                  type: integer
+                UserUsername:
+                  type: string
+        '403':
+          description: Доступ запрещён
+        '500':
+          description: Внутренняя ошибка сервера
+  /admin/reviews/{id}:
+    put:
+      tags:
+      - Админ Панель
+      summary: Редактирование отзыва
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: reviewUpdate
+        required: true
+        schema:
+          type: object
+          properties:
+            rating:
+              type: integer
+              minimum: 1
+              maximum: 5
+            comment:
+              type: string
+      responses:
+        '200':
+          description: Отзыв обновлён
+        '400':
+          description: Некорректные данные
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Отзыв не найден
+        '500':
+          description: Внутренняя ошибка сервера
+    delete:
+      tags:
+      - Админ Панель
+      summary: Удаление отзыва
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '204':
+          description: Отзыв удалён
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Отзыв не найден
+        '500':
+          description: Внутренняя ошибка сервера
+  /admin/roles:
+    post:
+      tags:
+      - Админ Панель
+      summary: Создание новой роли
+      security:
+      - Bearer: []
+      parameters:
+      - in: body
+        name: role
+        required: true
+        schema:
+          type: object
+          properties:
+            name:
+              type: string
+          required:
+          - name
+      responses:
+        '201':
+          description: Роль создана
+          schema:
+            type: object
+            properties:
+              roleId:
+                type: integer
+              name:
+                type: string
+        '400':
+          description: Некорректные данные
+        '403':
+          description: Доступ запрещён
+        '500':
+          description: Внутренняя ошибка сервера
+  /admin/roles/{id}:
+    delete:
+      tags:
+      - Админ Панель
+      summary: Удаление роли
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '204':
+          description: Роль удалена
+        '403':
+          description: Доступ запрещён / нельзя удалить системную роль
+        '404':
+          description: Роль не найдена
+        '500':
+          description: Внутренняя ошибка сервера
+  /recipes:
+    get:
+      tags:
+      - Рецепты
+      summary: Получение списка рецептов
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: Список рецептов
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                RecipeID:
+                  type: integer
+                MenuItemID:
+                  type: integer
+                Name:
+                  type: string
+                Category:
+                  type: string
+                CookingTime:
+                  type: integer
+                Difficulty:
+                  type: string
+                Rating:
+                  type: number
+                  format: float
+                CreatedAt:
+                  type: string
+                  format: date-time
+                ingredients:
+                  type: array
+                  items:
+                    type: object
+        '500':
+          description: Внутренняя ошибка сервера
+    post:
+      tags:
+      - Рецепты
+      summary: Создание нового рецепта
+      security:
+      - Bearer: []
+      parameters:
+      - in: body
+        name: recipe
+        required: true
+        schema:
+          type: object
+          properties:
+            name:
+              type: string
+            category:
+              type: string
+            cookingTime:
+              type: integer
+            difficulty:
+              type: string
+            rating:
+              type: number
+              format: float
+            menuItemId:
+              type: integer
+            ingredients:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  quantity:
+                    type: string
+            steps:
+              type: array
+              items:
+                type: object
+                properties:
+                  description:
+                    type: string
+                  tip:
+                    type: string
+          required:
+          - name
+      responses:
+        '201':
+          description: Рецепт создан
+          schema:
+            type: object
+            properties:
+              recipeId:
+                type: integer
+        '500':
+          description: Внутренняя ошибка сервера
+  /recipes/{id}:
+    get:
+      tags:
+      - Рецепты
+      summary: Получение рецепта по ID
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: Информация о рецепте
+          schema:
+            type: object
+            properties:
+              RecipeID:
+                type: integer
+              MenuItemID:
+                type: integer
+              Name:
+                type: string
+              Category:
+                type: string
+              CookingTime:
+                type: integer
+              Difficulty:
+                type: string
+              Rating:
+                type: number
+                format: float
+              CreatedAt:
+                type: string
+                format: date-time
+              ingredients:
+                type: array
+                items:
+                  type: object
+              steps:
+                type: array
+                items:
+                  type: object
+        '404':
+          description: Рецепт не найден
+        '500':
+          description: Внутренняя ошибка сервера
+    put:
+      tags:
+      - Рецепты
+      summary: Обновление рецепта
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: recipeUpdate
+        required: true
+        schema:
+          type: object
+          properties:
+            name:
+              type: string
+            category:
+              type: string
+            cookingTime:
+              type: integer
+            difficulty:
+              type: string
+            rating:
+              type: number
+              format: float
+            menuItemId:
+              type: integer
+            ingredients:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  quantity:
+                    type: string
+            steps:
+              type: array
+              items:
+                type: object
+                properties:
+                  description:
+                    type: string
+                  tip:
+                    type: string
+      responses:
+        '200':
+          description: Рецепт обновлён
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        '500':
+          description: Внутренняя ошибка сервера
+    delete:
+      tags:
+      - Рецепты
+      summary: Удаление рецепта
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '204':
+          description: Рецепт удалён
+        '404':
+          description: Рецепт не найден
+        '500':
+          description: Внутренняя ошибка сервера
+  /kitchen/team:
+    get:
+      tags:
+      - Кухня
+      summary: Получение списка сотрудников кухни
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: Список сотрудников кухни
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                UserID:
+                  type: integer
+                Username:
+                  type: string
+                RoleId:
+                  type: integer
+                CreatedDate:
+                  type: string
+                  format: date-time
+        '500':
+          description: Внутренняя ошибка сервера
+  /kitchen/equipment:
+    get:
+      tags:
+      - Кухня
+      summary: Получение списка оборудования
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: Список оборудования
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                EquipmentID:
+                  type: integer
+                Name:
+                  type: string
+                Status:
+                  type: string
+        '500':
+          description: Внутренняя ошибка сервера
+  /kitchen/equipment/{id}:
+    put:
+      tags:
+      - Кухня
+      summary: Обновление статуса оборудования
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: equipmentUpdate
+        required: true
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+          required:
+          - status
+      responses:
+        '200':
+          description: Оборудование обновлено
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        '404':
+          description: Оборудование не найдено
+        '500':
+          description: Внутренняя ошибка сервера
+  /kitchen/inventory:
+    get:
+      tags:
+      - Кухня
+      summary: Получение инвентаря
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: Список инвентаря
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                InventoryID:
+                  type: integer
+                Name:
+                  type: string
+                Quantity:
+                  type: string
+                Status:
+                  type: string
+        '500':
+          description: Внутренняя ошибка сервера
+  /kitchen/inventory/{id}:
+    put:
+      tags:
+      - Кухня
+      summary: Обновление инвентаря
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: inventoryUpdate
+        required: true
+        schema:
+          type: object
+          properties:
+            quantity:
+              type: string
+            status:
+              type: string
+      responses:
+        '200':
+          description: Инвентарь обновлён
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        '400':
+          description: Нет полей для обновления
+        '404':
+          description: Элемент инвентаря не найден
+        '500':
+          description: Внутренняя ошибка сервера
+  /cleaner/tasks:
+    get:
+      tags:
+      - Уборка
+      summary: Получение списка задач уборки
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: Список задач уборки
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                TaskID:
+                  type: integer
+                Title:
+                  type: string
+                Description:
+                  type: string
+                Area:
+                  type: string
+                Priority:
+                  type: string
+                Status:
+                  type: string
+                EstimatedTime:
+                  type: integer
+                AssignedTo:
+                  type: integer
+                DueTime:
+                  type: string
+                  format: date-time
+                CreatedAt:
+                  type: string
+                  format: date-time
+                CompletedAt:
+                  type: string
+                  format: date-time
+                TableID:
+                  type: integer
+                Checklist:
+                  type: object
+        '500':
+          description: Внутренняя ошибка сервера
+    post:
+      tags:
+      - Уборка
+      summary: Создание задачи уборки
+      security:
+      - Bearer: []
+      parameters:
+      - in: body
+        name: task
+        required: true
+        schema:
+          type: object
+          properties:
+            title:
+              type: string
+            description:
+              type: string
+            area:
+              type: string
+            priority:
+              type: string
+            estimatedTime:
+              type: integer
+            assignedTo:
+              type: integer
+            dueTime:
+              type: string
+              format: date-time
+            tableId:
+              type: integer
+            checklist:
+              type: array
+              items:
+                type: object
+          required:
+          - title
+      responses:
+        '201':
+          description: Задача создана
+          schema:
+            type: object
+            properties:
+              taskId:
+                type: integer
+        '500':
+          description: Внутренняя ошибка сервера
+  /cleaner/tasks/{id}:
+    put:
+      tags:
+      - Уборка
+      summary: Обновление задачи уборки
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: taskUpdate
+        required: true
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+            assignedTo:
+              type: integer
+            checklist:
+              type: array
+              items:
+                type: object
+            completedAt:
+              type: string
+              format: date-time
+      responses:
+        '200':
+          description: Задача обновлена
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        '400':
+          description: Нет полей для обновления
+        '404':
+          description: Задача не найдена
+        '500':
+          description: Внутренняя ошибка сервера
+    delete:
+      tags:
+      - Уборка
+      summary: Удаление задачи уборки
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '204':
+          description: Задача удалена
+        '404':
+          description: Задача не найдена
+        '500':
+          description: Внутренняя ошибка сервера
+  /cleaner/tasks/generate:
+    post:
+      tags:
+      - Уборка
+      summary: Генерация случайных задач уборки
+      security:
+      - Bearer: []
+      responses:
+        '201':
+          description: Задачи сгенерированы
+          schema:
+            type: object
+            properties:
+              taskIds:
+                type: array
+                items:
+                  type: integer
+              message:
+                type: string
+        '500':
+          description: Внутренняя ошибка сервера
+  /cleaner/zones:
+    get:
+      tags:
+      - Уборка
+      summary: Получение зон уборки
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: Список зон
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                ZoneID:
+                  type: integer
+                Name:
+                  type: string
+                Status:
+                  type: string
+                LastCleaned:
+                  type: string
+                  format: date-time
+                TasksCount:
+                  type: integer
+        '500':
+          description: Внутренняя ошибка сервера
+  /cleaner/zones/{id}:
+    put:
+      tags:
+      - Уборка
+      summary: Обновление зоны уборки
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: zoneUpdate
+        required: true
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+            lastCleaned:
+              type: string
+              format: date-time
+            tasksCount:
+              type: integer
+      responses:
+        '200':
+          description: Зона обновлена
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        '400':
+          description: Нет полей для обновления
+        '404':
+          description: Зона не найдена
+        '500':
+          description: Внутренняя ошибка сервера
+  /cleaner/schedule:
+    get:
+      tags:
+      - Уборка
+      summary: Получение расписания уборки
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: Расписание уборки
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                ScheduleID:
+                  type: integer
+                TaskName:
+                  type: string
+                Description:
+                  type: string
+                Area:
+                  type: string
+                Priority:
+                  type: string
+                EstimatedTime:
+                  type: integer
+                IntervalMinutes:
+                  type: integer
+                LastRun:
+                  type: string
+                  format: date-time
+                IsActive:
+                  type: integer
+        '500':
+          description: Внутренняя ошибка сервера
+    post:
+      tags:
+      - Уборка
+      summary: Создание задачи расписания уборки
+      security:
+      - Bearer: []
+      parameters:
+      - in: body
+        name: schedule
+        required: true
+        schema:
+          type: object
+          properties:
+            taskName:
+              type: string
+            description:
+              type: string
+            area:
+              type: string
+            priority:
+              type: string
+            estimatedTime:
+              type: integer
+            intervalMinutes:
+              type: integer
+          required:
+          - taskName
+      responses:
+        '201':
+          description: Задача расписания создана
+          schema:
+            type: object
+            properties:
+              scheduleId:
+                type: integer
+        '500':
+          description: Внутренняя ошибка сервера
+  /cleaner/schedule/{id}:
+    put:
+      tags:
+      - Уборка
+      summary: Обновление задачи расписания
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: scheduleUpdate
+        required: true
+        schema:
+          type: object
+          properties:
+            taskName:
+              type: string
+            description:
+              type: string
+            area:
+              type: string
+            priority:
+              type: string
+            estimatedTime:
+              type: integer
+            intervalMinutes:
+              type: integer
+            isActive:
+              type: integer
+            lastRun:
+              type: string
+              format: date-time
+      responses:
+        '200':
+          description: Расписание обновлено
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        '400':
+          description: Нет полей для обновления
+        '404':
+          description: Задача расписания не найдена
+        '500':
+          description: Внутренняя ошибка сервера
+    delete:
+      tags:
+      - Уборка
+      summary: Удаление задачи расписания
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '204':
+          description: Задача расписания удалена
+        '404':
+          description: Задача расписания не найдена
+        '500':
+          description: Внутренняя ошибка сервера
+  /suppliers:
+    get:
+      tags:
+      - Поставщики
+      summary: Получение списка поставщиков
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: Список поставщиков
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                SupplierID:
+                  type: integer
+                Name:
+                  type: string
+                Category:
+                  type: string
+                Rating:
+                  type: number
+                  format: float
+                Phone:
+                  type: string
+                ContactPerson:
+                  type: string
+                Status:
+                  type: string
+        '500':
+          description: Внутренняя ошибка сервера
+  /suppliers/orders:
+    get:
+      tags:
+      - Поставщики
+      summary: Получение заказов поставщиков
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: Список заказов поставщиков
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                OrderID:
+                  type: integer
+                SupplierID:
+                  type: integer
+                Status:
+                  type: string
+                Total:
+                  type: number
+                  format: float
+                OrderDate:
+                  type: string
+                  format: date-time
+                DeliveryDate:
+                  type: string
+                  format: date-time
+                items:
+                  type: array
+                  items:
+                    type: object
+        '500':
+          description: Внутренняя ошибка сервера
+    post:
+      tags:
+      - Поставщики
+      summary: Создание заказа поставщику
+      security:
+      - Bearer: []
+      parameters:
+      - in: body
+        name: order
+        required: true
+        schema:
+          type: object
+          properties:
+            supplierId:
+              type: integer
+            deliveryDate:
+              type: string
+              format: date-time
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  productName:
+                    type: string
+                  quantity:
+                    type: number
+                    format: float
+                  unit:
+                    type: string
+                  price:
+                    type: number
+                    format: float
+                required:
+                - productName
+                - quantity
+                - price
+          required:
+          - supplierId
+          - items
+      responses:
+        '201':
+          description: Заказ создан
+          schema:
+            type: object
+            properties:
+              orderId:
+                type: integer
+        '500':
+          description: Внутренняя ошибка сервера
+  /suppliers/orders/{id}/status:
+    put:
+      tags:
+      - Поставщики
+      summary: Обновление статуса заказа поставщика
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: statusUpdate
+        required: true
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+          required:
+          - status
+      responses:
+        '200':
+          description: Статус обновлён
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        '404':
+          description: Заказ не найден
+        '500':
+          description: Внутренняя ошибка сервера
+  /suppliers/chat/{supplierId}:
+    get:
+      tags:
+      - Поставщики
+      summary: Получение сообщений чата с поставщиком
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: supplierId
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: Сообщения чата
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                MessageID:
+                  type: integer
+                SupplierID:
+                  type: integer
+                UserID:
+                  type: integer
+                Role:
+                  type: string
+                Content:
+                  type: string
+                CreatedAt:
+                  type: string
+                  format: date-time
+                IsRead:
+                  type: integer
+        '500':
+          description: Внутренняя ошибка сервера
+  /suppliers/chat:
+    post:
+      tags:
+      - Поставщики
+      summary: Отправка сообщения поставщику (с AI-ответом)
+      security:
+      - Bearer: []
+      parameters:
+      - in: body
+        name: chatMessage
+        required: true
+        schema:
+          type: object
+          properties:
+            supplierId:
+              type: integer
+            message:
+              type: string
+            supplierName:
+              type: string
+          required:
+          - supplierId
+          - message
+      responses:
+        '200':
+          description: Сообщение отправлено
+          schema:
+            type: object
+            properties:
+              messageId:
+                type: integer
+              aiMessageId:
+                type: integer
+              content:
+                type: string
+        '500':
+          description: Внутренняя ошибка сервера
+  /suppliers/chat/read/{messageId}:
+    put:
+      tags:
+      - Поставщики
+      summary: Отметить сообщение как прочитанное
+      security:
+      - Bearer: []
+      parameters:
+      - in: path
+        name: messageId
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: Отмечено как прочитанное
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        '500':
+          description: Внутренняя ошибка сервера
+definitions: {}

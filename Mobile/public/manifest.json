@@ -1,0 +1,27 @@
+{
+  "short_name": "Золотая Ложка",
+  "name": "Золотая Ложка — Премиум",
+  "description": "Приложение премиального ресторана Золотая Ложка. Меню, заказы, бронирование.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121118",
+  "theme_color": "#121118",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://upload.timka20.ru/files/7bc87caadc65.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
