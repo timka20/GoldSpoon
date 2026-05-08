@@ -1,13 +1,5 @@
 # Курсовая работа: Автоматизированная система управления рестораном "Золотая ложка"
 
-Репозиторий: https://github.com/timka20/GoldSpoon
-
-## Авторы
-
-- Тимофей -- https://github.com/timka20
-- Яна -- https://github.com/KramarovskayaYE
-- Владислав -- https://github.com/Blaze2070
-
 ## Демонстрационные стенды
 
 - Главный сайт -- https://rpm.timka20.ru/
@@ -207,6 +199,8 @@ cd PC_application
 pm2 start ecosystem.config.js
 ```
 
-## Переменные окружения
+## Авторы
 
-Файл `.env` находится в корне проекта. На текущий момент файл пустой; при необходимости в него можно вынести параметры подключения к БД, секретный ключ JWT и адрес API.
+- Тимур -- https://github.com/timka20
+- Яна -- https://github.com/KramarovskayaYE
+- Булат -- https://github.com/Blaze2070
